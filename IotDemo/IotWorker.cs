@@ -2,9 +2,9 @@ namespace IotDemo;
 
 using System.Threading;
 using Iot.Device.Bmxx80;
-using Iot.Device.Bmxx80.PowerMode;
 using Iot.Device.CharacterLcd;
 using Iot.Device.Common;
+using Microsoft.Extensions.Hosting.Systemd;
 using UnitsNet;
 
 public class IotWorker(
@@ -15,8 +15,8 @@ public class IotWorker(
 
     public override async Task StartAsync(CancellationToken cancellationToken) {
         logger.LogInformation("Iot service starting");
-
-        await Task.Delay(1000, cancellationToken);
+        logger.LogInformation("Measurement duration: {MeasurementDuration}ms", bme280.GetMeasurementDuration());
+        logger.LogInformation("Systemd support enabled: {Enabled}", SystemdHelpers.IsSystemdService());
 
         var result = await bme280.ReadAsync();
         var heatIndex = WeatherHelper.CalculateHeatIndex(
@@ -39,7 +39,6 @@ public class IotWorker(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
         while (!stoppingToken.IsCancellationRequested) {
-            bme280.SetPowerMode(Bmx280PowerMode.Forced);
             await Task.Delay(1000, stoppingToken);
 
             var result = await bme280.ReadAsync();
@@ -64,8 +63,8 @@ public class IotWorker(
                 logger.LogInformation("Temperature: {Temperature:0.#}\u00B0C", result.Temperature?.DegreesCelsius);
                 logger.LogInformation("Pressure: {Pressure:0.##}hPa", result.Pressure?.Hectopascals);
                 logger.LogInformation("Altitude: {Altitude:0.##}m", altValue.Meters);
-                logger.LogInformation("Relative humidity: {Humidity:0.#}%", result.Humidity?.Percent);
-                logger.LogInformation("Heat Index: {HeatIndex}", heatIndex.DegreesCelsius);
+                logger.LogInformation("Relative humidity: {Humidity:0.##}%", result.Humidity?.Percent);
+                logger.LogInformation("Heat Index: {HeatIndex:0.#}", heatIndex.DegreesCelsius);
 
                 loop++;
             }

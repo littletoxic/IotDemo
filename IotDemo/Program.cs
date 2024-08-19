@@ -8,6 +8,7 @@ using System.Device.I2c;
 using IotDemo;
 
 var builder = Host.CreateApplicationBuilder(args);
+builder.Services.AddSystemd();
 builder.Services.AddHostedService<IotWorker>();
 builder.Services.AddSingleton(sp => {
     var i2c = I2cDevice.Create(new(0, Bmx280Base.SecondaryI2cAddress));
