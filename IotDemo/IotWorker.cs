@@ -12,10 +12,12 @@ public class IotWorker(
     Bme280 bme280,
     Lcd2004 lcd) : BackgroundService {
     private uint loop = 0;
+    private int measurementDuration;
 
     public override async Task StartAsync(CancellationToken cancellationToken) {
         logger.LogInformation("Iot service starting");
-        logger.LogInformation("Measurement duration: {MeasurementDuration}ms", bme280.GetMeasurementDuration());
+        measurementDuration = bme280.GetMeasurementDuration();
+        logger.LogInformation("Measurement duration: {MeasurementDuration}ms", measurementDuration);
         logger.LogInformation("Systemd support enabled: {Enabled}", SystemdHelpers.IsSystemdService());
 
         var result = await bme280.ReadAsync();
@@ -39,7 +41,7 @@ public class IotWorker(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
         while (!stoppingToken.IsCancellationRequested) {
-            await Task.Delay(1000, stoppingToken);
+            await Task.Delay(1000 - measurementDuration, stoppingToken);
 
             var result = await bme280.ReadAsync();
             var heatIndex = WeatherHelper.CalculateHeatIndex(
@@ -64,7 +66,7 @@ public class IotWorker(
                 logger.LogInformation("Pressure: {Pressure:0.##}hPa", result.Pressure?.Hectopascals);
                 logger.LogInformation("Altitude: {Altitude:0.##}m", altValue.Meters);
                 logger.LogInformation("Relative humidity: {Humidity:0.##}%", result.Humidity?.Percent);
-                logger.LogInformation("Heat Index: {HeatIndex:0.#}", heatIndex.DegreesCelsius);
+                logger.LogInformation("Heat Index: {HeatIndex:0.#}\u00B0C", heatIndex.DegreesCelsius);
 
                 loop++;
             }
