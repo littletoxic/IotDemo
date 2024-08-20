@@ -59,7 +59,7 @@ public class IotWorker(
             lcd.SetCursorPosition(12, 3);
             lcd.Write($"{heatIndex.DegreesCelsius,4:0.0}");
 
-            if (loop % 600 == 0) {
+            if (loop++ % 600 == 0) {
                 var altValue = WeatherHelper.CalculateAltitude(
                     (Pressure)result.Pressure!, WeatherHelper.MeanSeaLevel, (Temperature)result.Temperature!);
                 logger.LogInformation("Temperature: {Temperature:0.#}\u00B0C", result.Temperature?.DegreesCelsius);
@@ -67,8 +67,6 @@ public class IotWorker(
                 logger.LogInformation("Altitude: {Altitude:0.##}m", altValue.Meters);
                 logger.LogInformation("Relative humidity: {Humidity:0.##}%", result.Humidity?.Percent);
                 logger.LogInformation("Heat Index: {HeatIndex:0.#}\u00B0C", heatIndex.DegreesCelsius);
-
-                loop++;
             }
         }
     }
